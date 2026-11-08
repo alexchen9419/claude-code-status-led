@@ -1,0 +1,20 @@
+# WiFi 帳密
+secrets.h
+
+# Arduino / PlatformIO
+build/
+.pio/
+*.bin
+*.elf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 編輯器 / 系統
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

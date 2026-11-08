@@ -1,0 +1,218 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 'http://127.0.0.1:8765/flash?c=FFFFFF&ms=120&n=3' >/dev/null 2>&1; curl -s -m 1 http://127.0.0.1:8765/idle >/dev/null 2>&1 || true"
+          }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/working >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 'http://127.0.0.1:8765/ack' >/dev/null 2>&1; curl -s -m 1 'http://127.0.0.1:8765/working' >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/working >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/approval >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 'http://127.0.0.1:8765/latch?id=denied' >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/working >/dev/null 2>&1 || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 'http://127.0.0.1:8765/flash?c=FFFFFF&ms=60&n=1' >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 'http://127.0.0.1:8765/working' >/dev/null 2>&1; curl -s -m 1 'http://127.0.0.1:8765/latch?id=fail' >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/subagent/start >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/subagent/stop >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 'http://127.0.0.1:8765/latch?id=task' >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/compact >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/working >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "Elicitation": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/approval >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "ElicitationResult": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/working >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/approval >/dev/null 2>&1 || true"
+          }
+        ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/done >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/done >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 http://127.0.0.1:8765/error >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -m 1 'http://127.0.0.1:8765/ack' >/dev/null 2>&1; curl -s -m 1 'http://127.0.0.1:8765/idle' >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
+}
