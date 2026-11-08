@@ -28,42 +28,71 @@ git clone https://github.com/alexchen9419/claude-code-status-led.git
 
 ## 燈號說明
 
-### 基礎狀態（持續顯示）
+### 看到這個燈，代表什麼？
 
-| 狀態 | 燈號 | 觸發事件 |
+| 燈號 | 意思 | 你需要做什麼 |
 |---|---|---|
-| 待機 | 極暗白 | `SessionEnd` |
-| 工作中 | 藍色呼吸 | `UserPromptSubmit`、`PreToolUse`、`PostToolUse` |
-| Subagent 執行中 | 紫色呼吸（越多越快） | `SubagentStart` / `SubagentStop` |
-| 等待批准 / 輸入 | 琥珀色快閃 | `PermissionRequest`、`Notification`(permission_prompt)、`Elicitation` |
-| 壓縮上下文 | 青色快速脈動 | `PreCompact` → `PostCompact` |
-| 完成 | 綠色慢呼吸（持續到下一個 prompt） | `Stop`、`Notification`(idle_prompt) |
-| API 錯誤 | 紅色慢閃 | `StopFailure` |
-| Bridge 斷線（僅 COM port 版） | 暗紫色慢閃 | 超過 15 秒沒收到指令 |
+| ⚪ 極暗白，恆亮 | **待機**：沒有開啟中的 Claude Code session，或 session 已結束 | 不用做事 |
+| 🔵 藍色，慢慢呼吸 | **工作中**：Claude 正在思考、讀檔、改程式或執行指令 | 不用管它，讓它跑 |
+| 🟣 紫色，呼吸（越快 = 越多） | **Subagent 工作中**：Claude 把工作分派給子代理平行處理，呼吸越快代表同時跑的子代理越多 | 不用管它，讓它跑 |
+| 🟠 琥珀色，快速閃爍 | **等你回應**：Claude 要執行的動作需要你批准，或 MCP 工具在問你問題 | ⚠️ **回到 Claude Code 按允許 / 拒絕或回答問題**，不處理它會一直停在這裡 |
+| 🩵 青色，快速脈動 | **整理記憶**：對話太長，Claude 正在壓縮上下文 | 稍等幾秒，完成後會自動變回藍色 |
+| 🟢 綠色，慢慢呼吸 | **完成**：Claude 已經回覆完，在等你下一個指令 | 回去看結果、輸入下一個 prompt |
+| 🔴 紅色，慢閃 | **出錯中斷**：API 錯誤（網路斷線、額度用完、服務異常），這一輪沒跑完 | 回去看錯誤訊息，必要時重送 prompt |
+| 🟣 暗紫色，慢閃 | **燈本身斷線**（僅 COM port 版）：`led_bridge.py` 沒在執行 | 重新啟動 `led_bridge.py` |
 
-### 鎖存事件（循環播放直到確認）
+### 穿插在上面燈號之間的「提醒閃爍」
 
-| 事件 | 顏色 | 觸發事件 |
+這些是**你不在時發生過的事**。它們會一直循環播放，直到你按 BOOT 鍵或送出下一個 prompt。**閃幾下 = 發生幾次**（最多顯示 5 下）。
+
+| 燈號 | 意思 | 你需要做什麼 |
 |---|---|---|
-| 工具執行失敗 | 橘紅 | `PostToolUseFailure` |
-| 權限被拒 | 紅 | `PermissionDenied` |
-| 任務完成 | 綠 | `TaskCompleted` |
+| 🟧 橘紅，閃 n 下 | 有 **n 個指令 / 工具執行失敗**（例如編譯錯誤、檔案找不到） | 回去看 Claude 有沒有自己修好；它通常會自動重試 |
+| 🟥 紅，閃 n 下 | 有 **n 個動作被權限規則自動擋下** | 確認是否需要調整權限設定 |
+| 🟩 綠，閃 n 下 | Claude **完成了 n 個待辦任務** | 回去看進度 |
 
-每一輪的播放順序：
+播放方式：
 
 ```
-[事件 A 閃 n 下] → [事件 B 閃 n 下] → … → [基礎狀態 2.5 秒] → 重複
+[橘紅閃 2 下] → [綠閃 1 下] → [目前狀態 2.5 秒] → 重複…
 ```
 
-閃爍次數 = 發生次數，最多顯示 5 下。
+上面這個例子代表：你離開期間有 2 次工具失敗、完成了 1 個任務，而目前的狀態要看那 2.5 秒顯示什麼燈。
 
-### 一次性閃爍（不鎖存）
+### 只閃一下的燈（不用理會）
 
-| 事件 | 燈號 |
+| 燈號 | 意思 |
 |---|---|
-| `SessionStart` | 白色快閃 3 下 |
-| `PostToolUse`（Edit / Write） | 白光輕閃 1 下 |
-| 按 BOOT 鍵確認 | 白光輕閃 1 下 |
+| ⚪ 白色快閃 3 下 | 開啟了新的 Claude Code session，燈已連上 |
+| ⚪ 白光輕閃 1 下（工作中） | Claude 剛修改或寫入了一個檔案 |
+| ⚪ 白光輕閃 1 下（按鍵後） | 你按了 BOOT 鍵，提醒閃爍已清除 |
+
+### 最常見的情況
+
+- **一直藍色** → 它還在做，去忙別的。
+- **琥珀色在閃** → 它卡住在等你批准，**這是最需要注意的燈**。
+- **綠色 + 夾雜橘紅閃爍** → 做完了，但中間有遇到錯誤，回去確認結果。
+- **綠色 + 夾雜綠色閃爍** → 做完了，而且有完成的任務，回去驗收。
+
+<details>
+<summary>技術對照：燈號與 Claude Code hook 事件</summary>
+
+| 燈號 | Hook 事件 |
+|---|---|
+| 待機 | `SessionEnd` |
+| 工作中 | `UserPromptSubmit`、`PreToolUse`、`PostToolUse`、`PostCompact`、`ElicitationResult` |
+| Subagent | `SubagentStart` / `SubagentStop`（韌體內計數） |
+| 等你回應 | `PermissionRequest`、`Notification`(permission_prompt)、`Elicitation` |
+| 整理記憶 | `PreCompact` |
+| 完成 | `Stop`、`Notification`(idle_prompt) |
+| 出錯中斷 | `StopFailure` |
+| 橘紅提醒 | `PostToolUseFailure` |
+| 紅色提醒 | `PermissionDenied` |
+| 綠色提醒 | `TaskCompleted` |
+| 白色快閃 3 下 | `SessionStart` |
+| 白光輕閃 1 下 | `PostToolUse`（`Edit` / `Write` / `MultiEdit`） |
+
+</details>
 
 ---
 
